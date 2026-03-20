@@ -39,18 +39,9 @@ HF top-10 tokens:   [318, 320, 12344, 7, 596, 1697, 37082, 8318, 11, 48660]
 
 The 23.7ms figure is the FFN-only time. End-to-end including embedding lookup and lm_head is 24.2ms per token.
 
-### Speculative decode acceptance
+### Speculative decode performance
 
-**Teacher-forcing** (0.8B predicts 9B's chosen tokens, not autoregressive):
-
-| Prompt | Top-1 match | Top-5 match |
-|--------|-------------|-------------|
-| ISDA clause | 70.0% | 88.0% |
-| Financial analysis | 54.0% | 78.0% |
-| Regulatory | 58.0% | 82.0% |
-| Collateral | 56.0% | 84.0% |
-
-Teacher-forcing measures how often the 0.8B's top prediction matches the 9B's greedy choice at each position independently. This is an upper bound — autoregressive acceptance is lower because errors compound.
+**Bottom line: negative speedup on M5 Air 16GB.** The 0.8B draft model is not fast enough relative to the 9B target to overcome verification overhead.
 
 **Autoregressive speculative decode** (sequential K-token drafting + batch verify):
 
@@ -59,11 +50,22 @@ Teacher-forcing measures how often the 0.8B's top prediction matches the 9B's gr
 | ISDA clause | 24.6 | 26.0 | **0.94x** | 90.3% |
 | Collateral | 19.7 | 26.0 | **0.76x** | 62.5% |
 
+**Teacher-forcing** (upper bound — 0.8B predicts 9B's chosen tokens independently at each position, not autoregressive):
+
+| Prompt | Top-1 match | Top-5 match |
+|--------|-------------|-------------|
+| ISDA clause | 70.0% | 88.0% |
+| Financial analysis | 54.0% | 78.0% |
+| Regulatory | 58.0% | 82.0% |
+| Collateral | 56.0% | 84.0% |
+
+Teacher-forcing measures how often the 0.8B's top prediction matches the 9B's greedy choice at each position independently. This is an upper bound — autoregressive acceptance is lower because errors compound (37-59% measured in autoregressive mode, varying by prompt type).
+
 ### Why no speedup on M5 Air
 
-The 0.8B runs at 24ms/tok on ANE. The 9B runs at 42ms/tok on GPU. That's only a **1.75x speed ratio** — speculative decoding needs 5-10x to overcome verification overhead.
+The math: 0.8B draft at 24ms/tok (ANE), 9B target at 42ms/tok (GPU). Speed ratio = 42/24 = **1.75x**. Speculative decoding needs the draft to be 5-10x faster than the target to amortize verification overhead. At 1.75x, each speculative round costs almost as much as just running the target directly.
 
-**On M5 Pro (64GB) with 70B target:** 0.8B at 24ms/tok vs 70B at ~200ms/tok = **8x ratio** — in the spec decode sweet spot. The converter was built for this configuration.
+**On M5 Pro (64GB) with 70B target:** 0.8B at 24ms/tok vs 70B at ~200ms/tok = 200/24 = **8.3x ratio**. At 37-59% autoregressive acceptance and 8x speed ratio, expected speedup is 1.3-1.8x. The converter was built for this configuration.
 
 ## Why this was hard
 
@@ -127,7 +129,7 @@ State per decode step:
 - **Decode only** (seq_len=1). No prefill/batch mode — designed for autoregressive speculative decoding.
 - **Float16 precision.** Matches HF at top-10 token level; sub-token logit differences are normal for fp16.
 - **Large vocab** (248K) makes embedding/lm_head ~485MB each. Vocab pruning to 50K cuts these to ~100MB each (tested).
-- **Hardcoded to Qwen3.5-0.8B dimensions.** Adapting to other sizes (4B, etc.) requires changing constants. Not tested on other Qwen3.5 sizes.
+- **Hardcoded to Qwen3.5-0.8B dimensions.** The converter handles the full hybrid architecture (18 GatedDeltaNet SSM + 6 attention layers), but dimension constants are specific to 0.8B. Adapting to other Qwen3.5 sizes (4B, etc.) requires updating these constants.
 - **Negative speedup on M5 Air 16GB.** The 0.8B is only 1.75x faster than the 9B — insufficient for speculative decoding. Designed for 64GB Pro hardware with 70B target.
 - **`MODEL_PATH` is hardcoded** — update it to point to your local HF cache path.
 
