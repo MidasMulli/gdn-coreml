@@ -50,7 +50,34 @@ FFN time per token: 23.7ms
 
 ## Use case: speculative decoding draft model
 
-This was built to run Qwen3.5-0.8B on ANE as a speculative decode draft model for Qwen3.5-9B on GPU. Same tokenizer family means ~59% acceptance rate (measured). The ANE runs in parallel with GPU — zero GPU interference.
+Built to run Qwen3.5-0.8B on ANE as a speculative decode draft model for larger Qwen3.5 models on GPU. Same tokenizer (248K vocab) eliminates the cross-vocab problem that killed the Qwen3-1.7B approach.
+
+### Acceptance rates (teacher-forcing, 0.8B predicts 9B's chosen tokens)
+
+| Prompt | Top-1 match | Top-5 match |
+|--------|-------------|-------------|
+| ISDA clause | 70.0% | 88.0% |
+| Financial analysis | 54.0% | 78.0% |
+| Regulatory | 58.0% | 82.0% |
+| Collateral | 56.0% | 84.0% |
+
+### Speculative decode wallclock (M5 Air 16GB, K=2)
+
+| Prompt | Spec tok/s | Baseline tok/s | Speedup | Accept rate |
+|--------|-----------|----------------|---------|-------------|
+| ISDA clause | 24.6 | 26.0 | 0.94x | 90.3% |
+| Collateral | 19.7 | 26.0 | 0.76x | 62.5% |
+
+**On M5 Air (16GB):** 0.8B at 24ms/tok is only 1.75x faster than 9B at 42ms/tok — not enough to overcome verification overhead. Best case 0.94x (near break-even).
+
+**On M5 Pro (64GB) with 70B target:** 0.8B at 24ms/tok vs 70B at ~200ms/tok = 8x faster — firmly in the spec decode sweet spot. This is where the converter pays off.
+
+### Speed
+
+- Decode: **41.3 tok/s** (24.2ms per token)
+- Draft K=3: 71.6ms (42 draft tok/s)
+- Draft K=5: 119.3ms
+- Model load: ~11s (cached after first load)
 
 ## Files
 
@@ -58,9 +85,11 @@ This was built to run Qwen3.5-0.8B on ANE as a speculative decode draft model fo
 |------|---------|
 | `gdn_full_model.py` | Full Qwen3.5-0.8B implementation — all 24 layers, weight loader, RoPE, verification test |
 | `gdn_convert.py` | CoreML conversion pipeline — embedding, FFN (24 layers), lm_head |
+| `gdn_drafter.py` | Autoregressive draft source — loads CoreML models, generates tokens, async threading |
 | `gdn_coreml.py` | Step 1 proof — single GDN layer to CoreML (5.0ms, 0.001 max diff) |
 | `gdn_debug.py` | Layer-by-layer comparison tool (multi-token, HF hooks) |
 | `gdn_debug2.py` | Single-token layer-by-layer debug (found the RMSNorm bug) |
+| `benchmark_gdn_*.py` | Full benchmark suite (acceptance, teacher-forcing, speculative, pipelined) |
 
 ## Requirements
 
