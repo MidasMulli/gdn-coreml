@@ -4,6 +4,8 @@ To our knowledge, the first CoreML conversion of a GatedDeltaNet (SSM) architect
 
 ANEMLL and other CoreML converters only support attention-only architectures. Qwen3.5 is a hybrid model — 18 GatedDeltaNet SSM layers + 6 attention layers. This project implements the full SSM recurrence as traceable PyTorch, converts to CoreML via `coremltools`, and runs on ANE.
 
+**Why this matters for speculative decoding:** GatedDeltaNet accounts for 31% of per-layer compute in Qwen3.5-9B, and its sequential state dependency is the bottleneck that prevents batch verification from achieving the ideal plateau. NAX hardware measurements show quantized matmul costs only 1.14x at N=32 vs N=1, but the SSM layers process each token sequentially regardless of batch size. Converting this layer to ANE/CoreML isn't just an inference curiosity — it's the path to offloading the sequential bottleneck from the GPU verification pass. See [NAX probe findings](https://github.com/MidasMulli/orion-ane/blob/main/nax-probe/FINDINGS.md) for the hardware measurements.
+
 ## What this does
 
 Converts Qwen3.5-0.8B (all 24 layers) to three CoreML `.mlpackage` files:
