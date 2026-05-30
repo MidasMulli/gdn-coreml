@@ -4,7 +4,7 @@ To our knowledge (2026-05-30 prior-art check), this is the first GatedDeltaNet-s
 
 ANEMLL targets attention-only LLM architectures (LLaMA, Qwen, Gemma); non-attention / SSM-family models have also been run on CoreML/ANE (RWKV via rwkv-mobile, and Qwen3.5's hybrid SSM via CoreML-LLM). Qwen3.5 is a hybrid model with 18 GatedDeltaNet SSM layers plus 6 attention layers. This project implements the full SSM recurrence as traceable PyTorch, converts to CoreML via `coremltools`, and runs on ANE.
 
-**Why this matters for speculative decoding:** GatedDeltaNet accounts for 31% of per-layer compute in Qwen3.5-9B, and its sequential state dependency is the bottleneck that prevents batch verification from achieving the ideal plateau. NAX hardware measurements show quantized matmul costs only 1.14x at N=32 vs N=1, but the SSM layers process each token sequentially regardless of batch size. Converting this layer to ANE/CoreML isn't just an inference curiosity - it's the path to offloading the sequential bottleneck from the GPU verification pass. See [NAX probe findings](https://github.com/MidasMulli/orion-ane/blob/main/nax-probe/FINDINGS.md) for the hardware measurements.
+**Why this matters for speculative decoding:** GatedDeltaNet accounts for 31% of per-layer compute in Qwen3.5-9B, and its sequential state dependency is the bottleneck that prevents batch verification from achieving the ideal plateau. NAX hardware measurements show quantized matmul costs only 1.14x at N=32 vs N=1, but the SSM layers process each token sequentially regardless of batch size. Converting this layer to ANE/CoreML isn't just an inference curiosity - it's the path to offloading the sequential bottleneck from the GPU verification pass. See [NAX probe findings](https://github.com/MidasMulli/cognitive-stack-ane/blob/main/nax-probe/FINDINGS.md) for the hardware measurements.
 
 ## What this does
 
@@ -152,7 +152,7 @@ Requires Qwen3.5-0.8B weights from HuggingFace (downloads automatically on first
 ## Related
 
 - [four-path-mlx](https://github.com/MidasMulli/four-path-mlx) - Four-path speculative decoding server that uses this converter's output as ANE draft source
-- [orion-ane](https://github.com/MidasMulli/orion-ane) - ANE training + persistent memory daemon + agent framework
+- [orion-ane](https://github.com/MidasMulli/cognitive-stack-ane) - ANE training + persistent memory daemon + agent framework
 - [dual-path-inference](https://github.com/MidasMulli/dual-path-inference) - Initial GPU+ANE concurrency proof-of-concept (archived)
 - [ANEMLL](https://github.com/ANEMLL/ANEMLL) - CoreML converter for attention-only LLMs (Llama, Qwen3, etc.)
 - [coremltools](https://github.com/apple/coremltools) - Apple's PyTorch-to-CoreML conversion toolkit
