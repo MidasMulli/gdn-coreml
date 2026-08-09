@@ -28,7 +28,7 @@ from gdn_full_model import (
 )
 
 MODEL_PATH = "/Users/midas/.cache/huggingface/hub/models--Qwen--Qwen3.5-0.8B/snapshots/2fc06364715b967f1860aea9cf38778875588b17"
-CTX = 64  # Short context for draft model
+CTX = 256  # Longer context for better draft acceptance
 OUT_DIR = Path("/Users/midas/models/Qwen3.5-0.8B-coreml")
 
 
@@ -236,7 +236,7 @@ def test_end_to_end(embed_model, ffn_model, head_model):
     from transformers import AutoTokenizer
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
-    tokens = tokenizer.encode("The ISDA")
+    tokens = tokenizer.encode("The Apple")
 
     cos_cache, sin_cache = build_rope_cache(CTX)
     conv_states = np.zeros((18, CONV_DIM, CONV_KERNEL-1), dtype=np.float16)

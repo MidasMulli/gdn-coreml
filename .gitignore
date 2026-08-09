@@ -3,3 +3,44 @@ __pycache__/
 *.mlpackage/
 *.egg-info/
 .DS_Store
+
+# _gdndemo — 11 GB, DELIBERATELY IGNORED, NOT DISPOSABLE.
+# These are the mutable GDN chunk-models (BFMI intact, adapter.bin 1,344,320 B each).
+# On 2026-08-09 they were the ONLY surviving copy after the staging scratchpad was lost,
+# and re-staging from them reproduced the 84.4 ms anchor at 79.8 ms (n=40). They are
+# load-bearing for A-SECONDARY. Ignored because 11 GB does not belong in git; listed
+# here explicitly so they read as PROTECTED rather than as stray untracked files that
+# `git clean -fdx` may remove. Tracked in ane-mutable-weights/PRESERVATION_MANIFEST.json.
+_gdndemo/
+
+# _lffn / _lffn2 / _lffn3 / _lffn_clean — 27 GB total, DELIBERATELY IGNORED, NOT DISPOSABLE.
+# Four DISTINCT compiled GDN-4B LFFN models from 2026-07-29 (four different model.mil
+# hashes, built 49 minutes apart), NOT four copies of one thing. THREE OF THEM DECLARE
+# BlobFileMutabilityInfo and ship an adapter.bin beside weight.bin; _lffn_clean is the
+# BFMI=0 / weight.bin-only control, which is load-bearing precisely AS the control.
+# Only ONE _lffn.mlpackage survives, and gdn4b_lora_convert.py rebuilds `_lffn` by
+# `rm -rf _lffn` — so at most one of the four is regenerable and the other three have
+# no source on disk. Same shape as the lost _8b/_8blora chunk-models. Ignored because
+# 27 GB does not belong in git; listed so they read as PROTECTED, not as stray
+# untracked files a `git clean -fdx` may remove.
+_lffn/
+_lffn2/
+_lffn3/
+_lffn_clean/
+
+# _gin — 83 MB of captured f32 input tensors (causal_mask, conv_states, hidden_states,
+# kv_caches, recurrent_states) for the GDN scan-isolation work. NO producer script
+# exists on disk (grep over every .py returns nothing), so these are unregenerable
+# captured state, not build output. Protected, not disposable.
+_gin/
+
+# graphify-out/ -- code-graph build cache (~94 MB). Also indexes sources, so it
+# can carry gated content past a source-level gate. Never commit.
+graphify-out/
+
+# build artifacts from the GDN convert/LoRA path
+_apc*/
+_mpc*/
+_pkc*/
+_lffn_ad*.bin
+_lffn_at*.bin
