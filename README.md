@@ -1,6 +1,6 @@
 # GDN-CoreML: GatedDeltaNet SSM on Apple Neural Engine
 
-To our knowledge (2026-05-30 prior-art check), this is the first GatedDeltaNet-specific CoreML conversion for Apple Neural Engine inference (first commit 2026-03-20). CoreML-LLM (john-rocky) has concurrent independent hybrid-SSM CoreML support (v1.0.0, 2026-04-22); RWKV, a different linear-RNN, runs on CoreML/ANE via rwkv-mobile. We have not found a GatedDeltaNet-specific CoreML converter predating this one. This is a "to our knowledge" claim scoped to that audit date, not a hard first/only assertion.
+A 2026-05-30 prior-art check found no GatedDeltaNet-specific CoreML converter predating this one (first commit 2026-03-20). CoreML-LLM (john-rocky) has concurrent independent hybrid-SSM CoreML support (v1.0.0, 2026-04-22); RWKV, a different linear-RNN, runs on CoreML/ANE via rwkv-mobile. The scope is that check on that date, not a hard first/only assertion.
 
 ANEMLL targets attention-only LLM architectures (LLaMA, Qwen, Gemma); non-attention / SSM-family models have also been run on CoreML/ANE (RWKV via rwkv-mobile, and Qwen3.5's hybrid SSM via CoreML-LLM). Qwen3.5 is a hybrid model with 18 GatedDeltaNet SSM layers plus 6 attention layers. This project implements the full SSM recurrence as traceable PyTorch, converts to CoreML via `coremltools`, and runs on ANE.
 
