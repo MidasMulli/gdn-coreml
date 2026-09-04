@@ -44,3 +44,14 @@ _mpc*/
 _pkc*/
 _lffn_ad*.bin
 _lffn_at*.bin
+
+# Build outputs from the 0.8B/4B GDN conversion runs. Regenerable from the
+# conversion scripts; large (mlmodelc bundles + weight blobs). Ignored so the
+# working tree stays readable, NOT because they are disposable in-session.
+*.mlmodelc/
+_q35_*/
+_fedffn08b/
+_cbin/
+*.log
+*.bak
+*.bak_*
